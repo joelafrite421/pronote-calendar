@@ -2,15 +2,22 @@ name: Update Pronote WebCAL
 
 on:
   schedule:
-    # Exécution du lundi au vendredi à 5h00 UTC (7h00 heure française)
+    # Exécution du lundi au vendredi à 5h00 UTC (7h00 en France)
     - cron: '0 5 * * 1-5'
-  workflow_dispatch: # Lancement manuel possible
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
-  build-and-commit:
+  build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write # Autorise l'écriture du commit dans le dépôt
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -30,9 +37,18 @@ jobs:
           PRONOTE_PASSWORD: ${{ secrets.PRONOTE_PASSWORD }}
         run: python script.py
 
-      - name: Commit and push updated .ics file
-        run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add luce.ics
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Automated update of luce.ics" && git push)
+      - name: Upload artifact for GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.' # Envoie la racine avec luce.ics généré
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
