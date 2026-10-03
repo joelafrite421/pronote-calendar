@@ -1,3 +1,4 @@
+from zoneinfo import ZoneInfo
 import datetime
 import os
 from ics import Calendar, Event
@@ -41,26 +42,30 @@ def main():
         day = today + datetime.timedelta(days=i)
         lessons = client.lessons(day)
 
+        # Définition du fuseau horaire français
+        tz_paris = ZoneInfo("Europe/Paris")
+
         for lesson in sorted(lessons, key=lambda x: x.start):
             if lesson.canceled:
                 continue
 
             e = Event()
             e.name = lesson.subject.name
-            e.begin = lesson.start
-            e.end = lesson.end
-
+        
+            # Forcer le fuseau horaire Europe/Paris
+            e.begin = lesson.start.astimezone(tz_paris)
+            e.end = lesson.end.astimezone(tz_paris)
+        
             details = []
             if lesson.classroom:
                 e.location = f"Salle {lesson.classroom}"
             if lesson.teacher_name:
                 details.append(f"Professeur : {lesson.teacher_name}")
-
+        
             if details:
                 e.description = "\n".join(details)
-
+        
             cal.events.add(e)
-
     # Sauvegarde directe à la racine du dépôt
     filepath = "luce.ics"
 
