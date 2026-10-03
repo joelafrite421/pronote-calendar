@@ -1,0 +1,37 @@
+name: Update Pronote WebCAL
+
+on:
+  schedule:
+    # Exécution du lundi au vendredi à 5h00 UTC (7h00 heure française)
+    - cron: '0 5 * * 1-5'
+  workflow_dispatch: # Permet de lancer l'action manuellement depuis GitHub
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Autorisation d'écriture pour publier la page
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run script
+        env:
+          PRONOTE_URL: ${{ secrets.PRONOTE_URL }}
+          PRONOTE_USERNAME: ${{ secrets.PRONOTE_USERNAME }}
+          PRONOTE_PASSWORD: ${{ secrets.PRONOTE_PASSWORD }}
+        run: python script.py
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
