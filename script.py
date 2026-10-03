@@ -61,9 +61,8 @@ def main():
 
             cal.events.add(e)
 
-    # Dossier de sortie pour GitHub Pages
-    os.makedirs("public", exist_ok=True)
-    filepath = os.path.join("public", "luce.ics")
+    # Sauvegarde directe à la racine du dépôt
+    filepath = "luce.ics"
 
     with open(filepath, "w", encoding="utf-8") as f:
         f.writelines(cal.serialize_iter())
