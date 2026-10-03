@@ -1,2 +1,2 @@
 pronotepy
-ics
+icalendar
