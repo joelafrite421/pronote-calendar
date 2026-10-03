@@ -1,5 +1,6 @@
 import datetime
 import os
+from zoneinfo import ZoneInfo
 from icalendar import Calendar, Event
 import pronotepy
 import pronotepy.ent
@@ -9,6 +10,9 @@ USERNAME = os.environ.get("PRONOTE_USERNAME")
 PASSWORD = os.environ.get("PRONOTE_PASSWORD")
 ENT = pronotepy.ent.ent_ecollege78
 CHILD_NAME = "Luce"
+
+# Fuseau horaire métropolitain
+PARIS_TZ = ZoneInfo("Europe/Paris")
 
 
 def main():
@@ -46,9 +50,13 @@ def main():
             e = Event()
             e.add("summary", lesson.subject.name)
 
-            # Heure locale exacte sans conversion UTC
-            e.add("dtstart", lesson.start.replace(tzinfo=None))
-            e.add("dtend", lesson.end.replace(tzinfo=None))
+            # 1. On convertit d'abord l'heure UTC de Pronote vers l'heure de Paris
+            # 2. On retire tzinfo pour que l'agenda ne ré-applique pas de décalage
+            start_paris = lesson.start.astimezone(PARIS_TZ).replace(tzinfo=None)
+            end_paris = lesson.end.astimezone(PARIS_TZ).replace(tzinfo=None)
+
+            e.add("dtstart", start_paris)
+            e.add("dtend", end_paris)
 
             details = []
             if lesson.classroom:
