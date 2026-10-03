@@ -3,7 +3,9 @@ import os
 from icalendar import Calendar, Event
 import pronotepy
 import pronotepy.ent
+from zoneinfo import ZoneInfo
 
+PARIS_TZ = ZoneInfo("Europe/Paris")
 PRONOTE_URL = os.environ.get("PRONOTE_URL")
 USERNAME = os.environ.get("PRONOTE_USERNAME")
 PASSWORD = os.environ.get("PRONOTE_PASSWORD")
@@ -39,28 +41,40 @@ def main():
         day = today + datetime.timedelta(days=i)
         lessons = client.lessons(day)
 
-        for lesson in sorted(lessons, key=lambda x: x.start):
-            if lesson.canceled:
-                continue
-
-            e = Event()
-            e.add("summary", lesson.subject.name)
-
-            # On conserve la valeur brute heure/minute de Pronote (09h20)
-            # sans appliquer de décalage temporel.
-            e.add("dtstart", lesson.start.replace(tzinfo=None))
-            e.add("dtend", lesson.end.replace(tzinfo=None))
-
-            details = []
-            if lesson.classroom:
-                e.add("location", f"Salle {lesson.classroom}")
-            if lesson.teacher_name:
-                details.append(f"Professeur : {lesson.teacher_name}")
-
-            if details:
-                e.add("description", "\n".join(details))
-
-            cal.add_component(e)
+    for lesson in sorted(lessons, key=lambda x: x.start):
+        if lesson.canceled:
+            continue
+    
+        e = Event()
+        e.add("summary", lesson.subject.name)
+    
+        # 1. On convertit l'horaire UTC de pronotepy vers l'heure locale de Paris (07h20 UTC -> 09h20 CEST)
+        start_paris = lesson.start.astimezone(PARIS_TZ)
+        end_paris = lesson.end.astimezone(PARIS_TZ)
+    
+        # 2. On crée un datetime "naïf" à partir des valeurs locales exactes (sans tzinfo)
+        dtstart_naive = datetime.datetime(
+            start_paris.year, start_paris.month, start_paris.day,
+            start_paris.hour, start_paris.minute, start_paris.second
+        )
+        dtend_naive = datetime.datetime(
+            end_paris.year, end_paris.month, end_paris.day,
+            end_paris.hour, end_paris.minute, end_paris.second
+        )
+    
+        e.add("dtstart", dtstart_naive)
+        e.add("dtend", dtend_naive)
+    
+        details = []
+        if lesson.classroom:
+            e.add("location", f"Salle {lesson.classroom}")
+        if lesson.teacher_name:
+            details.append(f"Professeur : {lesson.teacher_name}")
+    
+        if details:
+            e.add("description", "\n".join(details))
+    
+        cal.add_component(e)
 
     with open("luce.ics", "wb") as f:
         f.write(cal.to_ical())
