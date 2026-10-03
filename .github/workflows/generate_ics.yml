@@ -4,13 +4,13 @@ on:
   schedule:
     # Exécution du lundi au vendredi à 5h00 UTC (7h00 heure française)
     - cron: '0 5 * * 1-5'
-  workflow_dispatch: # Permet de lancer l'action manuellement depuis GitHub
+  workflow_dispatch: # Lancement manuel possible
 
 jobs:
-  build-and-deploy:
+  build-and-commit:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Autorisation d'écriture pour publier la page
+      contents: write # Autorise l'écriture du commit dans le dépôt
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -30,8 +30,9 @@ jobs:
           PRONOTE_PASSWORD: ${{ secrets.PRONOTE_PASSWORD }}
         run: python script.py
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
+      - name: Commit and push updated .ics file
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add luce.ics
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Automated update of luce.ics" && git push)
