@@ -52,9 +52,9 @@ def main():
             e = Event()
             e.name = lesson.subject.name
         
-            # Forcer le fuseau horaire Europe/Paris
-            e.begin = lesson.start.astimezone(tz_paris)
-            e.end = lesson.end.astimezone(tz_paris)
+            # Retirer le fuseau horaire (tzinfo) pour garder l'heure exacte locale
+            e.begin = lesson.start.replace(tzinfo=None)
+            e.end = lesson.end.replace(tzinfo=None)
         
             details = []
             if lesson.classroom:
