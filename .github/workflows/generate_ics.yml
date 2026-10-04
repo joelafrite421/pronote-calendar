@@ -2,10 +2,9 @@ name: Update Pronote WebCAL
 
 on:
   schedule:
-    # Exécution du lundi au vendredi à 5h00 UTC (7h00 en France)
-    - cron: '0 5 * * 1-5'
+    # Exécution toutes les 15 min de 5h00 à 7h45 UTC (7h-9h+ en France) du lundi au vendredi
+    - cron: '*/15 5-7 * * 1-5'  
   workflow_dispatch:
-
 permissions:
   contents: read
   pages: write
@@ -35,6 +34,8 @@ jobs:
           PRONOTE_URL: ${{ secrets.PRONOTE_URL }}
           PRONOTE_USERNAME: ${{ secrets.PRONOTE_USERNAME }}
           PRONOTE_PASSWORD: ${{ secrets.PRONOTE_PASSWORD }}
+          FREE_USER: ${{ secrets.FREE_USER }}
+          FREE_PASS: ${{ secrets.FREE_PASS }}
         run: python script.py
 
       - name: Upload artifact for GitHub Pages
