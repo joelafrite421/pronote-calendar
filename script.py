@@ -34,6 +34,7 @@ def main():
     cal.add("prodid", "-//Pronote Calendar//FR")
     cal.add("version", "2.0")
 
+    paris_tz = ZoneInfo("Europe/Paris")
     today = datetime.date.today()
 
     for i in range(7):
@@ -44,17 +45,16 @@ def main():
             if lesson.canceled:
                 continue
 
-            # Création systématique de l'événement
+            # Création de l'événement
             e = Event()
             e.add("summary", lesson.subject.name)
 
-            # Correction du décalage horaire (+2h observées dans les tests précédents)
-            # On retire 2 heures à la valeur transmise par pronotepy pour obtenir 09:20 au lieu de 11:20
-            dtstart_corrected = lesson.start.replace(tzinfo=None) - datetime.timedelta(hours=2)
-            dtend_corrected = lesson.end.replace(tzinfo=None) - datetime.timedelta(hours=2)
+            # Conversion propre vers le fuseau horaire Europe/Paris
+            dtstart_paris = lesson.start.astimezone(paris_tz)
+            dtend_paris = lesson.end.astimezone(paris_tz)
 
-            e.add("dtstart", dtstart_corrected)
-            e.add("dtend", dtend_corrected)
+            e.add("dtstart", dtstart_paris)
+            e.add("dtend", dtend_paris)
 
             details = []
             if lesson.classroom:
@@ -65,7 +65,6 @@ def main():
             if details:
                 e.add("description", "\n".join(details))
 
-            # Ajout à l'intérieur de la boucle
             cal.add_component(e)
 
     with open("luce.ics", "wb") as f:
