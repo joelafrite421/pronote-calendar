@@ -49,21 +49,22 @@ def main():
             e = Event()
             e.add("summary", lesson.subject.name)
 
-            # 1. Pronote donne l'heure sous forme naive mais valeur UTC (ex: 07:20)
-            # On lui attache le vrai fuseau UTC s'il est naïf
+            # Pronote fournit l'heure en heure locale française (ex: 09:20).
+            # On lui associe directement le fuseau Europe/Paris sans la traiter comme de l'UTC.
             start_dt = lesson.start
             end_dt = lesson.end
 
             if start_dt.tzinfo is None:
-                start_dt = start_dt.replace(tzinfo=datetime.timezone.utc)
+                start_paris = start_dt.replace(tzinfo=paris_tz)
+            else:
+                start_paris = start_dt.astimezone(paris_tz)
+
             if end_dt.tzinfo is None:
-                end_dt = end_dt.replace(tzinfo=datetime.timezone.utc)
+                end_paris = end_dt.replace(tzinfo=paris_tz)
+            else:
+                end_paris = end_dt.astimezone(paris_tz)
 
-            # 2. Convertir vers l'heure réelle de Paris (ex: 07:20 UTC -> 09:20 Paris)
-            start_paris = start_dt.astimezone(paris_tz)
-            end_paris = end_dt.astimezone(paris_tz)
-
-            # 3. Transmettre à icalendar avec le fuseau Paris explicite
+            # Transmettre à icalendar avec le fuseau Paris
             e.add("dtstart", start_paris)
             e.add("dtend", end_paris)
 
