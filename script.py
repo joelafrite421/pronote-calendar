@@ -48,11 +48,12 @@ def main():
         e = Event()
         e.add("summary", lesson.subject.name)
     
-        # 1. On convertit l'horaire UTC de pronotepy vers l'heure locale de Paris (07h20 UTC -> 09h20 CEST)
-        start_paris = lesson.start.astimezone(PARIS_TZ)
-        end_paris = lesson.end.astimezone(PARIS_TZ)
+        # pronotepy renvoie lesson.start qui vaut 07:20+00:00 (correspondant à 09:20 Paris).
+        # En convertissant explicitement en Europe/Paris, on obtient l'heure locale exacte (09:20).
+        start_paris = lesson.start.astimezone(ZoneInfo("Europe/Paris"))
+        end_paris = lesson.end.astimezone(ZoneInfo("Europe/Paris"))
     
-        # 2. On crée un datetime "naïf" à partir des valeurs locales exactes (sans tzinfo)
+        # On reconstruit un datetime naïf strict à partir des chiffres locaux
         dtstart_naive = datetime.datetime(
             start_paris.year, start_paris.month, start_paris.day,
             start_paris.hour, start_paris.minute, start_paris.second
@@ -62,6 +63,8 @@ def main():
             end_paris.hour, end_paris.minute, end_paris.second
         )
     
+        # Si malgré cela le serveur sort 11h20, c'est que pronotepy renvoyait 09h20 UTC.
+        # Dans ce cas, utilise directement lesson.start.replace(tzinfo=None) - datetime.timedelta(hours=2)
         e.add("dtstart", dtstart_naive)
         e.add("dtend", dtend_naive)
     
@@ -73,8 +76,8 @@ def main():
     
         if details:
             e.add("description", "\n".join(details))
-    
-        cal.add_component(e)
+
+    cal.add_component(e)
 
     with open("luce.ics", "wb") as f:
         f.write(cal.to_ical())
