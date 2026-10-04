@@ -1,5 +1,6 @@
 import datetime
 import os
+import requests
 from zoneinfo import ZoneInfo
 from icalendar import Calendar, Event
 import pronotepy
@@ -10,7 +11,8 @@ USERNAME = os.environ.get("PRONOTE_USERNAME")
 PASSWORD = os.environ.get("PRONOTE_PASSWORD")
 ENT = pronotepy.ent.ent_ecollege78
 CHILD_NAME = "Luce"
-
+FREE_USER = os.getenv("FREE_USER")
+FREE_PASS = os.getenv("FREE_PASS")
 
 def main():
     if not all([PRONOTE_URL, USERNAME, PASSWORD]):
