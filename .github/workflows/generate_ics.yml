@@ -36,6 +36,7 @@ jobs:
           PRONOTE_PASSWORD: ${{ secrets.PRONOTE_PASSWORD }}
           FREE_USER: ${{ secrets.FREE_USER }}
           FREE_PASS: ${{ secrets.FREE_PASS }}
+          ICS_URL: "https://joelafrite421/pronote-calendar/luce.ics"
         run: python script.py
 
       - name: Upload artifact for GitHub Pages
