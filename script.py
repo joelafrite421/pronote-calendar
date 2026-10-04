@@ -33,7 +33,9 @@ def main():
     cal = Calendar()
     cal.add("prodid", "-//Pronote Calendar//FR")
     cal.add("version", "2.0")
+    cal.add("x-wr-timezone", "Europe/Paris")
 
+    paris_tz = ZoneInfo("Europe/Paris")
     today = datetime.date.today()
 
     for i in range(7):
@@ -47,13 +49,23 @@ def main():
             e = Event()
             e.add("summary", lesson.subject.name)
 
-            # pronotepy fournit lesson.start et lesson.end déjà en UTC ou avec tzinfo.
-            # Convertir explicitement en UTC garantit la norme ISO iCalendar avec suffixe Z.
-            dtstart_utc = lesson.start.astimezone(datetime.timezone.utc)
-            dtend_utc = lesson.end.astimezone(datetime.timezone.utc)
+            # 1. Pronote donne l'heure sous forme naive mais valeur UTC (ex: 07:20)
+            # On lui attache le vrai fuseau UTC s'il est naïf
+            start_dt = lesson.start
+            end_dt = lesson.end
 
-            e.add("dtstart", dtstart_utc)
-            e.add("dtend", dtend_utc)
+            if start_dt.tzinfo is None:
+                start_dt = start_dt.replace(tzinfo=datetime.timezone.utc)
+            if end_dt.tzinfo is None:
+                end_dt = end_dt.replace(tzinfo=datetime.timezone.utc)
+
+            # 2. Convertir vers l'heure réelle de Paris (ex: 07:20 UTC -> 09:20 Paris)
+            start_paris = start_dt.astimezone(paris_tz)
+            end_paris = end_dt.astimezone(paris_tz)
+
+            # 3. Transmettre à icalendar avec le fuseau Paris explicite
+            e.add("dtstart", start_paris)
+            e.add("dtend", end_paris)
 
             details = []
             if lesson.classroom:
